@@ -1,0 +1,44 @@
+# Tests on every push and pull request; release.yml calls it before creating the release.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: swift ${{ matrix.swift }} (linux)
+    runs-on: ubuntu-24.04
+    container: swift:${{ matrix.swift }}
+    strategy:
+      fail-fast: false
+      matrix:
+        swift: ['6.2', 'latest'] # Package.swift: swift-tools-version 6.2
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: swift build -c release
+      - run: swift test
+
+  macos:
+    name: swift (macos)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - run: swift build -c release
+      - run: swift test

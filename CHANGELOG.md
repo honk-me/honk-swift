@@ -4,7 +4,7 @@ All notable changes to the `HonkMe` Swift package are documented here. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.1.0] - 2026-10-03
+## [0.1.0] - 2026-10-04
 
 ### Added
 - `Honk` client for `POST /v1/messages` (Swift 6.2, strict concurrency, `Sendable`, async/await),
