@@ -20,7 +20,7 @@ apps, scripts, cron jobs and CI into calm, grouped push notifications on your ph
 
 ```swift
 // Package.swift
-.package(url: "https://github.com/honk-me/honk-swift.git", from: "0.1.0"),
+.package(url: "https://github.com/honk-me/honk-swift.git", from: "0.2.0"),
 // target:
 .product(name: "HonkMe", package: "honk-swift"),
 ```
