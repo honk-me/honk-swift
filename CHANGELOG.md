@@ -4,6 +4,14 @@ All notable changes to the `HonkMe` Swift package are documented here. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- `Message.actions`: up to 3 `Action(title:url:)` buttons (`https://`, `mailto:`, `tel:` or
+  `sms:`), sent as `actions` and omitted when empty. Validated locally like the server, with
+  errors on `actions`, `actions[i].title` and `actions[i].url`; `Limits.actions` and
+  `Limits.actionTitle`.
+
 ## [0.1.0] - 2026-10-04
 
 ### Added

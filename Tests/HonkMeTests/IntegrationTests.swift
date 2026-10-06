@@ -33,6 +33,24 @@ struct IntegrationTests {
         #expect(!first.duplicate && again.duplicate && again.id == first.id)
     }
 
+    @Test func actionsAreAcceptedAndPartOfTheIdempotencyPayload() async throws {
+        let honk = try client()
+        let key = "it-\(UUIDv7.make())"
+        var message = Message(
+            "Emily Carter asked for a quote \(run)", title: "New quote request", groupKey: "requests/\(run)",
+            actions: [Action(title: "Reply", url: "mailto:emily@example.com?subject=Your%20quote"), Action(title: "Call", url: "tel:+15550134")])
+        let first = try await honk.send(message, idempotencyKey: key)
+        let again = try await honk.send(message, idempotencyKey: key)
+        #expect(!first.duplicate && again.duplicate && again.id == first.id)
+        message.actions.removeLast()
+        do {
+            try await honk.send(message, idempotencyKey: key)
+            Issue.record("expected a conflict")
+        } catch HonkError.conflict(let f) {
+            #expect(f.status == 409 && f.code == "idempotency_conflict")
+        }
+    }
+
     @Test func sameKeyDifferentPayloadIsAConflict() async throws {
         let honk = try client()
         let key = "it-\(UUIDv7.make())"
@@ -85,6 +103,15 @@ struct IntegrationTests {
             Issue.record("expected a validation error")
         } catch HonkError.validation(let f) {
             #expect(!f.isLocal && f.status == 422 && f.fields.map { "\($0.field):\($0.code)" } == ["ttl_seconds:out_of_range"])
+        }
+    }
+
+    @Test func serverSideActionValidationMapsFields() async throws {
+        do {
+            try await client(validate: false).send(Message("x", actions: [Action(title: "Call", url: "tel:+15550134"), Action(title: "Open", url: "javascript:alert(1)")]))
+            Issue.record("expected a validation error")
+        } catch HonkError.validation(let f) {
+            #expect(!f.isLocal && f.status == 422 && f.fields.map { "\($0.field):\($0.code)" } == ["actions[1].url:invalid_format"])
         }
     }
 }

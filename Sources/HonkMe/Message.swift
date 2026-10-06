@@ -101,6 +101,20 @@ public enum MetadataValue: Sendable, Equatable, Codable, ExpressibleByStringLite
     }
 }
 
+/// A button on a message: `Action(title: "Call Emily", url: "tel:+15550134")`. Honk never opens
+/// the URL; the phone does, when you tap the button.
+public struct Action: Sendable, Equatable, Hashable, Codable {
+    /// 1–40 characters, one line, shown as sent.
+    public var title: String
+    /// `https://` (no credentials), `mailto:`, `tel:` or `sms:`, ≤ 2048 bytes.
+    public var url: String
+
+    public init(title: String, url: String) {
+        self.title = title
+        self.url = url
+    }
+}
+
 /// One event for `POST /v1/messages`. Only `message` is required; nil fields are omitted, so the
 /// server defaults apply (severity info, priority normal, source "api", environment "default",
 /// channel "general", event type event, TTL 3600 s).
@@ -130,6 +144,8 @@ public struct Message: Sendable, Equatable {
     public var url: String?
     /// An https image the server fetches after ingestion (no credentials or fragment).
     public var imageURL: String?
+    /// Up to 3 buttons, in display order (the first is the primary). Empty: none.
+    public var actions: [Action]
     /// ≤ 16 keys matching `[A-Za-z0-9_.-]{1,64}`.
     public var metadata: [String: MetadataValue]
     /// Push lifetime, 60–86400 seconds (default 3600).
@@ -151,6 +167,7 @@ public struct Message: Sendable, Equatable {
         occurredAt: Date? = nil,
         url: String? = nil,
         imageURL: String? = nil,
+        actions: [Action] = [],
         metadata: [String: MetadataValue] = [:],
         ttlSeconds: Int? = nil,
         sourceSequence: Int64? = nil
@@ -168,6 +185,7 @@ public struct Message: Sendable, Equatable {
         self.occurredAt = occurredAt
         self.url = url
         self.imageURL = imageURL
+        self.actions = actions
         self.metadata = metadata
         self.ttlSeconds = ttlSeconds
         self.sourceSequence = sourceSequence

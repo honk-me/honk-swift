@@ -129,6 +129,7 @@ try await honk.send(message, idempotencyKey: "redis-down-2026-10-03")
 | `eventType` | `.event` `.problem` `.recovery` (`recovery` needs `groupKey`) |
 | `occurredAt` | `Date`, sent as UTC RFC 3339 with milliseconds |
 | `url` / `imageURL` | `https://` only, no credentials (`imageURL`: no `#fragment`; fetched by the server afterwards) |
+| `actions` | up to 3 `Action(title:url:)` buttons, see [Actions](#actions) |
 | `metadata` | `[String: MetadataValue]`, literals work; ≤ 16 keys `[A-Za-z0-9_.-]{1,64}`, strings ≤ 512 characters |
 | `ttlSeconds` | push lifetime 60–86400 (default 3600) |
 | `sourceSequence` | `Int64`, 0 … 2^53-1, needs `groupKey` |
@@ -148,6 +149,27 @@ try await honk.recovery(groupKey: "db/backup", "Backup OK", "pg_dump finished in
 Options: `Honk(url:key:timeout:retries:deadline:defaults:validate:backoff:configuration:userAgent:)`
 with `timeout` 5 s per attempt, `retries` 4, `deadline` 30 s, a `URLSessionConfiguration`
 (proxies; redirects are never followed) and `validate: false` to leave all checks to the server.
+
+## Actions
+
+Up to three buttons on a message, in display order (the first is the primary). Honk never opens
+them; the phone does when you tap one: Mail for `mailto:`, the Phone app for `tel:`, Messages for
+`sms:`, Safari for `https://`.
+
+```swift
+try await honk.light("New quote request", "Emily Carter asked for a quote: 3 rooms, 2 bathrooms") {
+    $0.groupKey = "requests/4812"
+    $0.actions = [
+        Action(title: "Reply", url: "mailto:emily@example.com?subject=Your%20quote"),
+        Action(title: "Call", url: "tel:+15550134"),
+    ]
+}
+```
+
+A title is 1–40 characters on one line, shown as sent. A URL is at most 2048 bytes without
+spaces: `https://` (no credentials), `mailto:` with one address and an optional
+`?subject=…&body=…`, `tel:` with a number, or `sms:` with a number and an optional `?body=…`.
+Anything else (`http:`, `javascript:`, app schemes) is rejected as `actions[i].url`.
 
 ## Retries and idempotency, guaranteed
 

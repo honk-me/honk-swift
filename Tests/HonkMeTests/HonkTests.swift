@@ -20,6 +20,7 @@ struct ClientTests {
                 groupKey: "billing/redis/connectivity", eventType: .problem,
                 occurredAt: ISO8601DateFormatter().date(from: "2026-10-01T21:10:00Z"),
                 url: "https://example.com/incidents/redis", imageURL: "https://cdn.example.com/a.jpg?w=1&h=2",
+                actions: [Action(title: "Runbook", url: "https://example.com/runbooks/redis"), Action(title: "Call on-call", url: "tel:+15550134")],
                 metadata: ["host": "app-01", "attempts": 3, "retried": true, "ratio": 0.5],
                 ttlSeconds: 3600, sourceSequence: 42
             ))
@@ -42,11 +43,12 @@ struct ClientTests {
         #expect(json["event_type"] as? String == "problem")
         #expect(json["occurred_at"] as? String == "2026-10-01T21:10:00.000Z")
         #expect(json["image_url"] as? String == "https://cdn.example.com/a.jpg?w=1&h=2")
+        #expect(json["actions"] as? [[String: String]] == [["title": "Runbook", "url": "https://example.com/runbooks/redis"], ["title": "Call on-call", "url": "tel:+15550134"]])
         #expect(json["ttl_seconds"] as? Int == 3600)
         #expect(json["source_sequence"] as? Int == 42)
         let md = try #require(json["metadata"] as? [String: Any])
         #expect(md["host"] as? String == "app-01" && md["attempts"] as? Int == 3 && md["retried"] as? Bool == true)
-        #expect(Set(json.keys) == ["title", "message", "severity", "priority", "category", "source", "environment", "channel", "group_key", "event_type", "occurred_at", "url", "image_url", "metadata", "ttl_seconds", "source_sequence"])
+        #expect(Set(json.keys) == ["title", "message", "severity", "priority", "category", "source", "environment", "channel", "group_key", "event_type", "occurred_at", "url", "image_url", "actions", "metadata", "ttl_seconds", "source_sequence"])
         #expect(!String(decoding: r.body, as: UTF8.self).contains(#"\/"#))
     }
 
@@ -55,9 +57,11 @@ struct ClientTests {
         let honk = try mockClient(defaults: Defaults(source: "cron", environment: "production", channel: ""))
         try await honk.send(Message("a"))
         try await honk.send(Message("b", source: "laravel", channel: "requests"))
+        try await honk.send(Message("c", actions: []))
         let r = MockURLProtocol.requests
         #expect(r[0].json as NSDictionary == ["message": "a", "source": "cron", "environment": "production"])
         #expect(r[1].json as NSDictionary == ["message": "b", "source": "laravel", "environment": "production", "channel": "requests"])
+        #expect(r[2].json as NSDictionary == ["message": "c", "source": "cron", "environment": "production"])
     }
 
     @Test func helpersAndTheHonkScale() async throws {
